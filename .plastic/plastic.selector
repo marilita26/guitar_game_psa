@@ -1,0 +1,4 @@
+repository "guitar_game_psa/guitar_game_psa@6872780280952@cloud"
+  path "/"
+    br "/main"
+    co "/main"
