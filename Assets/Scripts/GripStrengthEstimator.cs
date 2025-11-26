@@ -11,11 +11,30 @@ public class GripStrengthEstimator : MonoBehaviour
     public int sampleRateGuess = 50;       // ~fps
     public float windowSec = 1.0f;         // πόσο "πίσω" κοιτάμε (δευτ)
     public float baselineSec = 3.0f;       // πόσο κρατάει το αρχικό baseline
-    public float gain = 3.0f;              // πόσο "ευαίσθητη" είναι η κλίμακα
 
-    Queue<float> qB = new Queue<float>();  // αποθηκεύουμε |B| στο παράθυρο
+    [Header("Sensitivity (gain ανά αισθητήρα)")]
+    public float magGain = 3.0f;         // πόσο "εύκολα" πιάνει 100% από το μαγνητικό
+    public float accGain = 3.0f;         // πόσο εύκολα τιμωρούμε την κίνηση
+    public float touchGain = 3.0f;         // πόσο εύκολα ανεβαίνει από το touch area
 
-    float baselineStd = 0f;                // std(|B|) σε ηρεμία
+    [Header("Weights (συνδυασμός αισθητήρων)")]
+    [Range(0, 1)] public float wMag = 0.6f;  // πόσο μετράει το μαγνητικό
+    [Range(0, 1)] public float wTouch = 0.4f;  // πόσο μετράει το touch
+    [Range(0, 1)] public float wMotionPenalty = 0.2f; // πόσο δυνατά τιμωρούμε την κίνηση
+
+    [Header("Shaping")]
+    [Range(0, 0.5f)] public float deadZone = 0.2f;   // αγνοεί μικρές αλλαγές
+    [Range(0, 1)] public float smoothAlpha = 0.15f;  // 0.1–0.3 πόσο γρήγορα αλλάζει
+
+    // Κυλιόμενα παράθυρα
+    Queue<float> qMag = new Queue<float>(); // |B|
+    Queue<float> qAcc = new Queue<float>(); // |acc|
+    Queue<float> qTouch = new Queue<float>(); // touch radius
+
+    // Baseline (ηρεμία)
+    float baselineStdMag = 0f;
+    float baselineStdAcc = 0f;
+    float baselineTouch = 0f;
     bool baselineDone = false;
     float t0;
 
@@ -26,15 +45,24 @@ public class GripStrengthEstimator : MonoBehaviour
     void Start()
     {
         Input.compass.enabled = true;
-        Input.location.Start(); // βοηθάει να "ξυπνήσει" το magnetometer
+        Input.location.Start();   // βοηθάει να "ξυπνήσει" το magnetometer
+
         t0 = Time.realtimeSinceStartup;
 
-        Debug.Log("[GripSimple] Ready. Δώσε άδεια Τοποθεσίας στο app για να δουλέψει το magnetometer.");
+        Debug.Log("[GripMulti] Ready. Δώσε άδεια Τοποθεσίας στο app για να δουλέψει το magnetometer.");
     }
 
     void Update()
     {
-        // 1) Διάβασε μαγνητικό πεδίο
+        // Αν ΔΕΝ ακουμπάω την οθόνη → δεν υπάρχει grip
+        if (Input.touchCount == 0)
+        {
+            GripStrengthPercent = Mathf.Lerp(GripStrengthPercent, 0f, smoothAlpha);
+            if (strengthText) strengthText.text = "Grip: 0% (no touch)";
+            return;
+        }
+
+        // 1) Μαγνητικό πεδίο
         Vector3 rawB = Input.compass.rawVector;
         float magB = rawB.magnitude;
 
@@ -44,53 +72,112 @@ public class GripStrengthEstimator : MonoBehaviour
             return;
         }
 
-        // 2) Γέμισε το κυλιόμενο παράθυρο
-        qB.Enqueue(magB);
-        if (qB.Count > N) qB.Dequeue();
+        // 2) Accelerometer (μέτρο επιτάχυνσης)
+        Vector3 acc = Input.acceleration;
+        float accMag = acc.magnitude;
 
-        if (qB.Count < N)
+        // 3) Touch area (proxy πίεσης)
+        float touchRadius = 0f;
+        {
+            float sumR = 0f;
+            for (int i = 0; i < Input.touchCount; i++)
+            {
+                var touch = Input.GetTouch(i);
+                sumR += touch.radius;
+            }
+            touchRadius = sumR / Input.touchCount;
+        }
+
+        // 4) Γέμισε τα παράθυρα
+        qMag.Enqueue(magB);
+        if (qMag.Count > N) qMag.Dequeue();
+
+        qAcc.Enqueue(accMag);
+        if (qAcc.Count > N) qAcc.Dequeue();
+
+        qTouch.Enqueue(touchRadius);
+        if (qTouch.Count > N) qTouch.Dequeue();
+
+        if (qMag.Count < N || qAcc.Count < N || qTouch.Count < N)
         {
             if (strengthText) strengthText.text = "Grip: --% (warming up)";
             return;
         }
 
-        // 3) Υπολόγισε std(|B|) στο παράθυρο
+        // 5) Στατιστικά παραθύρου
         float meanB, stdB;
-        WindowStats(qB, out meanB, out stdB);
+        WindowStats(qMag, out meanB, out stdB);
+
+        float meanAcc, stdAcc;
+        WindowStats(qAcc, out meanAcc, out stdAcc);
+
+        float meanTouch, stdTouch;
+        WindowStats(qTouch, out meanTouch, out stdTouch);
 
         float t = Time.realtimeSinceStartup - t0;
 
-        // 4) Πρώτα baseline (ηρεμία)
+        // 6) Baseline ηρεμίας
         if (!baselineDone)
         {
             if (t < baselineSec)
             {
-                // κάνουμε moving average για baselineStd
-                baselineStd = Mathf.Lerp(baselineStd, stdB, 0.05f);
+                baselineStdMag = Mathf.Lerp(baselineStdMag, stdB, 0.05f);
+                baselineStdAcc = Mathf.Lerp(baselineStdAcc, stdAcc, 0.05f);
+                baselineTouch = Mathf.Lerp(baselineTouch, meanTouch, 0.05f);
+
                 if (strengthText) strengthText.text = "Grip: --% (calibrating)";
                 return;
             }
             else
             {
                 baselineDone = true;
-                if (baselineStd < 1e-6f)
-                    baselineStd = 1e-3f; // για να μην μηδενιστεί τελείως
-
-                Debug.Log($"[GripSimple] Baseline std = {baselineStd:F6}");
+                if (baselineStdMag < 1e-6f) baselineStdMag = 1e-3f;
+                if (baselineStdAcc < 1e-6f) baselineStdAcc = 1e-3f;
+                Debug.Log($"[GripMulti] Baseline stdMag={baselineStdMag:F6}, stdAcc={baselineStdAcc:F6}, touch={baselineTouch:F3}");
             }
         }
 
-        // 5) Υπολόγισε GripStrength μόνο από το πόσο μεγαλύτερη std έχεις από την baseline
-        float excess = stdB - baselineStd;          // πόσο πιο "νευρικό" είναι τώρα
-        float denom = baselineStd * gain + 1e-6f;   // όσο μεγαλύτερο gain, τόσο πιο εύκολα πιάνει 100%
+        // 7) "Excess" για κάθε αισθητήρα
 
-        float z = excess / denom;                   // αν excess = gain * baselineStd → z ≈ 1
+        // MAG – όσο πιο πολύ αλλάζει το πεδίο με την πίεση
+        float excessMag = Mathf.Max(0f, stdB - baselineStdMag);
+        float denomMag = baselineStdMag * magGain + 1e-6f;
+        float zMag = Mathf.Clamp01(excessMag / denomMag);
+
+        // ACC – ΘΕΛΟΥΜΕ ΝΑ ΜΑΣ ΤΙΜΩΡΕΙ ΟΤΑΝ ΥΠΑΡΧΕΙ ΠΟΛΛΗ ΚΙΝΗΣΗ
+        float excessAcc = Mathf.Max(0f, stdAcc - baselineStdAcc);
+        float denomAcc = baselineStdAcc * accGain + 1e-6f;
+        float zMotion = Mathf.Clamp01(excessAcc / denomAcc); // 0 = ήρεμο, 1 = πολύ κούνημα
+
+        // TOUCH – πόσο μεγαλώνει η επιφάνεια επαφής
+        float excessTouch = Mathf.Max(0f, meanTouch - baselineTouch);
+        float denomTouch = (baselineTouch + 1f) * touchGain + 1e-6f;
+        float zTouch = Mathf.Clamp01(excessTouch / denomTouch);
+
+        // 8) Συνδυασμός: σήμα πίεσης * ποινή κίνησης
+        float zGripCore = wMag * zMag + wTouch * zTouch;
+        zGripCore = Mathf.Clamp01(zGripCore);
+
+        // Ποινή κίνησης: όσο πιο πολύ κουνάς, τόσο μικρότερο factor
+        float motionFactor = 1f - wMotionPenalty * zMotion;   // από 1.0 μέχρι 1-wMotionPenalty
+        motionFactor = Mathf.Clamp01(motionFactor);
+
+        float z = zGripCore * motionFactor;
+
+        // 9) Dead-zone
+        if (z < deadZone)
+            z = 0f;
+        else
+            z = (z - deadZone) / (1f - deadZone);
+
         z = Mathf.Clamp01(z);
 
-        GripStrengthPercent = 100f * z;
+        // 10) Smoothing
+        float target = 100f * z;
+        GripStrengthPercent = Mathf.Lerp(GripStrengthPercent, target, smoothAlpha);
 
         if (strengthText)
-            strengthText.text = $"Grip (mag): {GripStrengthPercent:F0}%";
+            strengthText.text = $"Grip: {GripStrengthPercent:F0}%";
     }
 
     // ========== HELPERS ==========
