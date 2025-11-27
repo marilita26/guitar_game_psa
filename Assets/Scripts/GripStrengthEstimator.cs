@@ -18,8 +18,8 @@ public class GripStrengthEstimator : MonoBehaviour
     public float touchGain = 3.0f;         // πόσο εύκολα ανεβαίνει από το touch area
 
     [Header("Weights (συνδυασμός αισθητήρων)")]
-    [Range(0, 1)] public float wMag = 0.6f;  // πόσο μετράει το μαγνητικό
-    [Range(0, 1)] public float wTouch = 0.4f;  // πόσο μετράει το touch
+    [Range(0, 1)] public float wMag = 0.8f;  // πόσο μετράει το μαγνητικό
+    [Range(0, 1)] public float wTouch = 0.2f;  // πόσο μετράει το touch
     [Range(0, 1)] public float wMotionPenalty = 0.2f; // πόσο δυνατά τιμωρούμε την κίνηση
 
     [Header("Shaping")]
