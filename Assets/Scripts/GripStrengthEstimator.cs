@@ -15,11 +15,11 @@ public class GripStrengthEstimator : MonoBehaviour
     [Header("Sensitivity (gain ανά αισθητήρα)")]
     public float magGain = 3.0f;         // πόσο "εύκολα" πιάνει 100% από το μαγνητικό
     public float accGain = 3.0f;         // πόσο εύκολα τιμωρούμε την κίνηση
-    public float touchGain = 3.0f;         // πόσο εύκολα ανεβαίνει από το touch area
+    public float touchGain = 3.0f;       // πόσο εύκολα ανεβαίνει από το touch area
 
     [Header("Weights (συνδυασμός αισθητήρων)")]
-    [Range(0, 1)] public float wMag = 0.8f;  // πόσο μετράει το μαγνητικό
-    [Range(0, 1)] public float wTouch = 0.2f;  // πόσο μετράει το touch
+    [Range(0, 1)] public float wMag = 0.8f;   // πόσο μετράει το μαγνητικό
+    [Range(0, 1)] public float wTouch = 0.2f; // πόσο μετράει το touch
     [Range(0, 1)] public float wMotionPenalty = 0.2f; // πόσο δυνατά τιμωρούμε την κίνηση
 
     [Header("Shaping")]
@@ -27,8 +27,8 @@ public class GripStrengthEstimator : MonoBehaviour
     [Range(0, 1)] public float smoothAlpha = 0.15f;  // 0.1–0.3 πόσο γρήγορα αλλάζει
 
     // Κυλιόμενα παράθυρα
-    Queue<float> qMag = new Queue<float>(); // |B|
-    Queue<float> qAcc = new Queue<float>(); // |acc|
+    Queue<float> qMag = new Queue<float>();   // |B|
+    Queue<float> qAcc = new Queue<float>();   // |acc|
     Queue<float> qTouch = new Queue<float>(); // touch radius
 
     // Baseline (ηρεμία)
@@ -181,7 +181,6 @@ public class GripStrengthEstimator : MonoBehaviour
     }
 
     // ========== HELPERS ==========
-
     static void WindowStats(Queue<float> q, out float mean, out float std)
     {
         int n = q.Count;
