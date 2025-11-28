@@ -150,7 +150,15 @@ public class GripStrengthEstimator : MonoBehaviour
         float zMotion = Mathf.Clamp01(excessAcc / denomAcc); // 0 = ήρεμο, 1 = πολύ κούνημα
 
         // TOUCH – πόσο μεγαλώνει η επιφάνεια επαφής
-        float excessTouch = Mathf.Max(0f, meanTouch - baselineTouch);
+
+        // ΠΡΙΝ:
+        // float excessTouch = Mathf.Max(0f, meanTouch - baselineTouch);
+
+        // ΜΕΤΑ: χρησιμοποιούμε την ΤΡΕΧΟΥΣΑ τιμή touchRadius για να μην
+        // κουβαλάει μνήμη από προηγούμενα πατήματα και να μην αλλάζει
+        // συμπεριφορά η "επόμενη" φορά.
+        float excessTouch = Mathf.Max(0f, touchRadius - baselineTouch);   // ***
+
         float denomTouch = (baselineTouch + 1f) * touchGain + 1e-6f;
         float zTouch = Mathf.Clamp01(excessTouch / denomTouch);
 
@@ -199,3 +207,4 @@ public class GripStrengthEstimator : MonoBehaviour
         std = Mathf.Sqrt(var);
     }
 }
+
