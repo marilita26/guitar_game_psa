@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using TMPro; // αν δεν χρησιμοποιείς TextMeshPro, βγάλε τις αναφορές UI
+using TMPro; 
 
 public class GripAnalyzer : MonoBehaviour
 {
     [Header("References")]
-    public EMFlog emf;                  // σύρε εδώ το EMFlog από το Hierarchy
+    public EMFlog emf;                  
 
     [Header("UI (optional)")]
-    public TextMeshProUGUI statusText;  // δείξε "Stable"/"Unstable"
-    public TextMeshProUGUI meanText;    // mean |B|
-    public TextMeshProUGUI stdText;     // std |B|
-    public TextMeshProUGUI peakText;    // peak-to-peak ΔB
-    public TextMeshProUGUI giText;      // Grip Index
+    public TextMeshProUGUI statusText;  
+    public TextMeshProUGUI meanText;    
+    public TextMeshProUGUI stdText;     
+    public TextMeshProUGUI peakText;    
+    public TextMeshProUGUI giText;      
 
     [Header("Analysis Settings")]
     public int sampleRateGuess = 50;    // ~Hz (χρησιμοποιούμε frame-rate proxy)
@@ -51,9 +51,7 @@ public class GripAnalyzer : MonoBehaviour
     {
         if (emf == null) return;
 
-        // "τρέχουμε" αν ο EMFlog γράφει (δανειζόμαστε το ίδιο flag)
-        // δεν έχει public flag, οπότε θα πάρουμε το τελευταίο δείγμα από το αρχείο samples μέσω helper
-        // Λύση: υπολόγισε από rawVector κάθε frame εδώ (ανεξάρτητο από EMFlog)
+       
         Vector3 rawB = Input.compass.rawVector;
         float mag = rawB.magnitude;
 

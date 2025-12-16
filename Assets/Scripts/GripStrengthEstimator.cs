@@ -5,7 +5,7 @@ using TMPro;
 public class GripStrengthEstimator : MonoBehaviour
 {
     [Header("UI")]
-    public TextMeshProUGUI strengthText;   // Σύρε εδώ το TextMeshPro από το Canvas
+    public TextMeshProUGUI strengthText;   
 
     [Header("Παράθυρο / Baseline")]
     public int sampleRateGuess = 50;       // ~fps
@@ -15,11 +15,11 @@ public class GripStrengthEstimator : MonoBehaviour
     [Header("Sensitivity (gain ανά αισθητήρα)")]
     public float magGain = 3.0f;         // πόσο "εύκολα" πιάνει 100% από το μαγνητικό
     public float accGain = 3.0f;         // πόσο εύκολα τιμωρούμε την κίνηση
-    public float touchGain = 3.0f;       // πόσο εύκολα ανεβαίνει από το touch area
+    public float touchGain = 3.0f;         // πόσο εύκολα ανεβαίνει από το touch area
 
     [Header("Weights (συνδυασμός αισθητήρων)")]
-    [Range(0, 1)] public float wMag = 0.8f;   // πόσο μετράει το μαγνητικό
-    [Range(0, 1)] public float wTouch = 0.2f; // πόσο μετράει το touch
+    [Range(0, 1)] public float wMag = 0.8f;  // πόσο μετράει το μαγνητικό
+    [Range(0, 1)] public float wTouch = 0.2f;  // πόσο μετράει το touch
     [Range(0, 1)] public float wMotionPenalty = 0.2f; // πόσο δυνατά τιμωρούμε την κίνηση
 
     [Header("Shaping")]
@@ -27,8 +27,8 @@ public class GripStrengthEstimator : MonoBehaviour
     [Range(0, 1)] public float smoothAlpha = 0.15f;  // 0.1–0.3 πόσο γρήγορα αλλάζει
 
     // Κυλιόμενα παράθυρα
-    Queue<float> qMag = new Queue<float>();   // |B|
-    Queue<float> qAcc = new Queue<float>();   // |acc|
+    Queue<float> qMag = new Queue<float>(); // |B|
+    Queue<float> qAcc = new Queue<float>(); // |acc|
     Queue<float> qTouch = new Queue<float>(); // touch radius
 
     // Baseline (ηρεμία)
@@ -144,21 +144,13 @@ public class GripStrengthEstimator : MonoBehaviour
         float denomMag = baselineStdMag * magGain + 1e-6f;
         float zMag = Mathf.Clamp01(excessMag / denomMag);
 
-        // ACC – ΘΕΛΟΥΜΕ ΝΑ ΜΑΣ ΤΙΜΩΡΕΙ ΟΤΑΝ ΥΠΑΡΧΕΙ ΠΟΛΛΗ ΚΙΝΗΣΗ
+        
         float excessAcc = Mathf.Max(0f, stdAcc - baselineStdAcc);
         float denomAcc = baselineStdAcc * accGain + 1e-6f;
         float zMotion = Mathf.Clamp01(excessAcc / denomAcc); // 0 = ήρεμο, 1 = πολύ κούνημα
 
         // TOUCH – πόσο μεγαλώνει η επιφάνεια επαφής
-
-        // ΠΡΙΝ:
-        // float excessTouch = Mathf.Max(0f, meanTouch - baselineTouch);
-
-        // ΜΕΤΑ: χρησιμοποιούμε την ΤΡΕΧΟΥΣΑ τιμή touchRadius για να μην
-        // κουβαλάει μνήμη από προηγούμενα πατήματα και να μην αλλάζει
-        // συμπεριφορά η "επόμενη" φορά.
-        float excessTouch = Mathf.Max(0f, touchRadius - baselineTouch);   // ***
-
+        float excessTouch = Mathf.Max(0f, meanTouch - baselineTouch);
         float denomTouch = (baselineTouch + 1f) * touchGain + 1e-6f;
         float zTouch = Mathf.Clamp01(excessTouch / denomTouch);
 
@@ -188,7 +180,8 @@ public class GripStrengthEstimator : MonoBehaviour
             strengthText.text = $"Grip: {GripStrengthPercent:F0}%";
     }
 
-    // ========== HELPERS ==========
+    //  HELPERS 
+
     static void WindowStats(Queue<float> q, out float mean, out float std)
     {
         int n = q.Count;
@@ -207,4 +200,3 @@ public class GripStrengthEstimator : MonoBehaviour
         std = Mathf.Sqrt(var);
     }
 }
-

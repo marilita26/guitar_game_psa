@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class EMFlog : MonoBehaviour
 {
-    // ----------------- RAW SAMPLE -----------------
+    
     [Serializable]
     public class MagSample
     {
@@ -14,7 +14,7 @@ public class EMFlog : MonoBehaviour
         public float magnitude;
     }
 
-    // ----------------- SESSION META (μία καταγραφή Start→Stop) -----------------
+   
     [Serializable]
     public class SessionMeta
     {
@@ -27,19 +27,19 @@ public class EMFlog : MonoBehaviour
         public float maxB;         // μέγιστο |B|
     }
 
-    // ----------------- "ΒΑΣΗ ΔΕΔΟΜΕΝΩΝ" JSON -----------------
+    
     [Serializable]
     public class SessionDB
     {
         public List<SessionMeta> sessions = new List<SessionMeta>();
     }
 
-    // ----------------- INTERNAL STATE -----------------
+    
     private List<MagSample> samples = new List<MagSample>();
     private float t0;
     private bool logging = false;
 
-    // ----------------- UNITY LIFECYCLE -----------------
+    
     void Start()
     {
         // Ο μαγνητόμετρος στο Unity εκτίθεται ως Input.compass.rawVector
@@ -76,7 +76,7 @@ public class EMFlog : MonoBehaviour
         }
     }
 
-    // ----------------- PUBLIC API ΓΙΑ ΚΟΥΜΠΙΑ -----------------
+    
 
     // Κουμπί 1: START
     public void StartLogging()
@@ -102,7 +102,7 @@ public class EMFlog : MonoBehaviour
         string csvPath = SaveCSV();
         SaveToJsonDB(csvPath);
 
-        // Ξεφορτώσου τα παλιά δείγματα για την επόμενη συνεδρία
+        
         samples.Clear();
     }
 
@@ -141,8 +141,8 @@ public class EMFlog : MonoBehaviour
         return filePath;
     }
 
-    // ----------------- JSON "DATABASE" UPDATE -----------------
-    // Ενημερώνει / δημιουργεί το emf_sessions_db.json με μια νέα εγγραφή
+    
+    
     private void SaveToJsonDB(string csvPath)
     {
         try

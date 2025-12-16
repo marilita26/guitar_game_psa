@@ -1,12 +1,12 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.UI; // μόνο αν θες να χρωματίζεις background/image
+using UnityEngine.UI; 
 
 public class GripStrengthLabel : MonoBehaviour
 {
-    public GripStrengthEstimator estimator;  // σύρε εδώ το GripStrengthEstimator
-    public TextMeshProUGUI label;           // σύρε ένα TMP Text από το Canvas
-    public Image badge;                     // (προαιρετικό) ένα μικρό Image για χρώμα
+    public GripStrengthEstimator estimator; 
+    public TextMeshProUGUI label;           
+    public Image badge;                     
 
     [Header("Thresholds (% of 0..100)")]
     [Range(0, 100)] public float mediumTh = 33f;
@@ -26,7 +26,7 @@ public class GripStrengthLabel : MonoBehaviour
 
         label.text = msg;
         label.color = c;
-        if (badge) badge.color = c;  // αν έχεις μικρό χρωματιστό badge
+        if (badge) badge.color = c;  
     }
 }
 
