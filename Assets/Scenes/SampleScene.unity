@@ -2160,19 +2160,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b95b2d08cffcd4d4db78d4f907a069df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baselineSec: 2
+  baselineSec: 4
   magScale: 0.8
   magLP: 0.1
-  motionAccThresh: 0.18
-  motionSuppress: 0.6
+  motionAccThresh: 0.12
+  motionSuppress: 1
   motionLP: 0.12
   touchScale: 5
   touchCurve: 1
-  wMag: 0.6
-  wTouch: 0.4
+  wMag: 0.5
+  wTouch: 0.5
   deadZone: 0.03
   finalCurve: 1.2
   smoothAlpha: 0.25
+  deltaNoiseFloor: 0.28
   dbg_magLooksDead: 0
   dbg_hasTouch: 0
   dbg_touchRadius: 0
