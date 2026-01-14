@@ -3,7 +3,7 @@
 public class GripStrengthEstimator : MonoBehaviour
 {
     [Header("Baseline")]
-    public float baselineSec = 2.0f;
+    public float baselineSec = 4.0f;
 
     [Header("Magnetic (use magnitude ONLY)")]
     [Tooltip("Μικρότερο => πιο ευαίσθητο")]
@@ -14,21 +14,24 @@ public class GripStrengthEstimator : MonoBehaviour
 
     [Header("Motion gating (ignore motion)")]
     [Tooltip("Όσο μεγαλύτερο, τόσο πιο δύσκολα θεωρεί κίνηση")]
-    public float motionAccThresh = 0.18f;   
+    public float motionAccThresh = 0.12f;   
     [Tooltip("Πόσο δυνατά 'κόβει' το mag όταν υπάρχει κίνηση.")]
-    [Range(0f, 1f)] public float motionSuppress = 0.6f; // 1 = πλήρες κόψιμο
+    [Range(0f, 1f)] public float motionSuppress = 1f; // 1 = πλήρες κόψιμο
     [Range(0.01f, 0.3f)] public float motionLP = 0.12f;
 
     [Header("Touch (secondary)")]
     public float touchScale = 5f;
     [Range(1f, 3f)] public float touchCurve = 1f;
-    [Range(0f, 1f)] public float wMag = 0.6f;
-    [Range(0f, 1f)] public float wTouch = 0.4f;
+    [Range(0f, 1f)] public float wMag = 0.5f;
+    [Range(0f, 1f)] public float wTouch = 0.5f;
 
     [Header("Output shaping")]
     [Range(0f, 0.5f)] public float deadZone = 0.03f;
     [Range(1f, 3f)] public float finalCurve = 1.2f;
     [Range(0f, 1f)] public float smoothAlpha = 0.25f;
+    [Header("Mag noise floor")]
+    public float deltaNoiseFloor = 0.28f;
+
 
     // ===== DEBUG EXPORTS =====
     [HideInInspector] public bool dbg_magLooksDead;
@@ -130,6 +133,8 @@ public class GripStrengthEstimator : MonoBehaviour
             }
 
             baselineDone = true;
+            smoothBmag = baselineBmag;
+            slowBmag = baselineBmag;
             Debug.Log($"[Grip v4] BaselineBmag={baselineBmag:F3}, baselineTouch={baselineTouch:F2}");
         }
 
@@ -137,7 +142,9 @@ public class GripStrengthEstimator : MonoBehaviour
         smoothBmag = Mathf.Lerp(smoothBmag, Bmag, magLP);
         
         slowBmag = Mathf.Lerp(slowBmag, Bmag, 0.01f);  
-        float deltaMag = Mathf.Abs(smoothBmag - slowBmag); // HIGH-PASS Δ|B|
+        float deltaMagRaw = Mathf.Abs(smoothBmag - slowBmag);
+        float deltaMag = Mathf.Max(0f, deltaMagRaw - deltaNoiseFloor); // remove baseline noise
+
 
         float zMag = (magScale > 1e-6f) ? Mathf.Clamp01(deltaMag / magScale) : 0f;
 
