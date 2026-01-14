@@ -264,7 +264,7 @@ Transform:
   m_GameObject: {fileID: 241513692}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -720, y: -1544, z: 0}
+  m_LocalPosition: {x: -1150, y: -1544, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2217,6 +2217,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   est: {fileID: 1910892618}
   logEnabled: 1
+  flushEveryFrames: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
