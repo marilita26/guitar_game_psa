@@ -6,14 +6,14 @@ public class GripStrengthEstimator : MonoBehaviour
     public float baselineSec = 2.0f;
 
     [Header("Magnetic (use magnitude ONLY)")]
-    [Tooltip("Μικρότερο => πιο ευαίσθητο. Π.χ. 2–10 για |B|.")]
+    [Tooltip("Μικρότερο => πιο ευαίσθητο")]
     public float magScale = 0.8f;
     [Range(0.01f, 0.3f)] public float magLP = 0.10f;
     float slowBmag = 0f;   // very slow tracker for high-pass
 
 
     [Header("Motion gating (ignore motion)")]
-    [Tooltip("Όσο μεγαλύτερο, τόσο πιο δύσκολα θεωρεί 'κίνηση'. Δοκίμασε 0.08–0.20.")]
+    [Tooltip("Όσο μεγαλύτερο, τόσο πιο δύσκολα θεωρεί κίνηση")]
     public float motionAccThresh = 0.18f;   
     [Tooltip("Πόσο δυνατά 'κόβει' το mag όταν υπάρχει κίνηση.")]
     [Range(0f, 1f)] public float motionSuppress = 0.6f; // 1 = πλήρες κόψιμο
